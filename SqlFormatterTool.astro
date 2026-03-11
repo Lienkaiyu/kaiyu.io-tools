@@ -1,0 +1,61 @@
+---
+---
+
+<div class="tool-container">
+    <div class="tool-panel" style="display: flex; justify-content: flex-end;">
+        <div class="tool-actions">
+            <div class="select-wrapper">
+                <select id="sql-dialect" class="tool-select">
+                    <option value="sql">Standard SQL</option>
+                    <option value="mysql">MySQL</option>
+                    <option value="postgresql">PostgreSQL</option>
+                    <option value="bigquery">BigQuery</option>
+                    <option value="transactsql">T-SQL (SQL Server)</option>
+                </select>
+            </div>
+            <button id="format-btn" class="tool-btn tool-btn-primary">Format SQL</button>
+        </div>
+    </div>
+
+    <div class="tool-grid-2">
+        <div class="tool-col">
+            <label class="tool-label">Input SQL</label>
+            <textarea id="sql-input" class="tool-textarea" placeholder="SELECT * FROM users WHERE id = 1" style="min-height: 400px;"></textarea>
+        </div>
+        <div class="tool-col">
+            <label class="tool-label">Formatted Output</label>
+            <textarea id="sql-output" class="tool-textarea" readonly style="min-height: 400px;"></textarea>
+        </div>
+    </div>
+</div>
+
+<script>
+    import { format } from 'sql-formatter';
+
+    const input = document.getElementById('sql-input');
+    const output = document.getElementById('sql-output');
+    const btn = document.getElementById('format-btn');
+    const dialectSelect = document.getElementById('sql-dialect');
+
+    function formatSql() {
+        if (!input || !output) return;
+        
+        const sql = input.value;
+        const dialect = dialectSelect.value;
+
+        try {
+            const formatted = format(sql, {
+                language: dialect,
+                tabWidth: 2,
+                keywordCase: 'upper',
+            });
+            output.value = formatted;
+        } catch (e) {
+            output.value = `Error: ${e.message}`;
+        }
+    }
+
+    if (btn) {
+        btn.addEventListener('click', formatSql);
+    }
+</script>

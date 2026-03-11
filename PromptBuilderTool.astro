@@ -1,0 +1,79 @@
+<div class="tool-container">
+    <div class="tool-grid-2">
+        <div class="tool-col">
+            <div class="tool-group" style="margin-bottom: 20px;">
+                <label class="tool-label">System Prompt (Context/Role)</label>
+                <textarea id="system-prompt" class="tool-textarea" placeholder="You are a helpful AI assistant..." style="height: 120px; min-height: 120px;"></textarea>
+            </div>
+            <div class="tool-group" style="margin-bottom: 20px;">
+                <label class="tool-label">User Prompt (Instruction)</label>
+                <textarea id="user-prompt" class="tool-textarea" placeholder="Write a poem about..." style="height: 120px; min-height: 120px;"></textarea>
+            </div>
+            <div class="tool-group" style="margin-bottom: 20px;">
+                <label class="tool-label">Variables (JSON format, optional)</label>
+                <textarea id="vars-input" class="tool-textarea" placeholder='{ "topic": "AI" }' style="height: 80px; min-height: 80px; font-family: monospace;"></textarea>
+            </div>
+        </div>
+
+        <div class="tool-col">
+            <label class="tool-label">Preview / Final Prompt</label>
+            <div class="tool-textarea" id="preview-output" style="height: 400px; overflow-y: auto; white-space: pre-wrap; font-family: monospace;"></div>
+            <div class="tool-actions" style="margin-top: 15px; justify-content: flex-end;">
+                <button id="copy-btn" class="tool-btn tool-btn-primary">Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const systemInput = document.getElementById('system-prompt');
+    const userInput = document.getElementById('user-prompt');
+    const varsInput = document.getElementById('vars-input');
+    const preview = document.getElementById('preview-output');
+    const copyBtn = document.getElementById('copy-btn');
+
+    if (systemInput && userInput && preview) {
+        function updatePreview() {
+            let system = systemInput.value;
+            let user = userInput.value;
+            let vars = {};
+
+            try {
+                if (varsInput.value.trim()) {
+                    vars = JSON.parse(varsInput.value);
+                }
+            } catch (e) {
+                // Ignore JSON errors while typing
+            }
+
+            // Simple variable substitution {{key}}
+            const replaceVars = (text) => {
+                return text.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+                    return vars[key] || match;
+                });
+            };
+
+            system = replaceVars(system);
+            user = replaceVars(user);
+
+            let output = '';
+            if (system) output += `### SYSTEM ###\n${system}\n\n`;
+            if (user) output += `### USER ###\n${user}`;
+
+            preview.textContent = output || '(Start typing to see preview...)';
+        }
+
+        [systemInput, userInput, varsInput].forEach(el => {
+            el.addEventListener('input', updatePreview);
+        });
+
+        copyBtn.addEventListener('click', () => {
+            if (preview.textContent) {
+                navigator.clipboard.writeText(preview.textContent);
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => copyBtn.textContent = originalText, 2000);
+            }
+        });
+    }
+</script>

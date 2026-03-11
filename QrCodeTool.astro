@@ -1,0 +1,101 @@
+<div class="tool-container">
+    <div class="tool-col">
+        <div class="tool-group">
+            <label for="input-text" class="tool-label">Content (URL or Text)</label>
+            <textarea id="input-text" class="tool-textarea" placeholder="https://example.com"></textarea>
+        </div>
+
+        <div class="tool-group">
+            <label class="tool-label">Options</label>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <div>
+                    <label for="color-dark" class="tool-label" style="font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">Foreground Color</label>
+                    <input type="color" id="color-dark" value="#000000">
+                </div>
+                <div>
+                    <label for="color-light" class="tool-label" style="font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">Background Color</label>
+                    <input type="color" id="color-light" value="#ffffff">
+                </div>
+                <div>
+                    <label for="size-select" class="tool-label" style="font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">Size</label>
+                    <select id="size-select" class="tool-select" style="padding: 0.25rem;">
+                        <option value="128">Small (128px)</option>
+                        <option value="256" selected>Medium (256px)</option>
+                        <option value="512">Large (512px)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="tool-actions">
+            <button id="generate-btn" class="tool-btn tool-btn-primary">Generate QR Code</button>
+            <button id="download-btn" class="tool-btn tool-btn-secondary" disabled>Download PNG</button>
+        </div>
+
+        <div class="tool-group" style="display: flex; justify-content: center; align-items: center; min-height: 300px; background: var(--bg-secondary); border-radius: 8px; padding: 2rem;">
+            <div id="qrcode-container"></div>
+        </div>
+    </div>
+</div>
+
+<script is:inline src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script>
+    const input = document.getElementById('input-text');
+    const generateBtn = document.getElementById('generate-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const container = document.getElementById('qrcode-container');
+    const colorDarkInput = document.getElementById('color-dark');
+    const colorLightInput = document.getElementById('color-light');
+    const sizeSelect = document.getElementById('size-select');
+
+    if (input && generateBtn && container && downloadBtn && colorDarkInput && colorLightInput && sizeSelect) {
+        
+        const generate = () => {
+            const text = input.value.trim();
+            if (!text) return;
+
+            container.innerHTML = '';
+            const colorDark = colorDarkInput.value;
+            const colorLight = colorLightInput.value;
+            const width = parseInt(sizeSelect.value);
+
+            // @ts-ignore
+            QRCode.toCanvas(text, {
+                width: width,
+                margin: 2,
+                color: {
+                    dark: colorDark,
+                    light: colorLight
+                }
+            }, function (error, canvas) {
+                if (error) {
+                    console.error(error);
+                    container.innerText = "Error generating QR Code";
+                    return;
+                }
+                container.appendChild(canvas);
+                downloadBtn.disabled = false;
+            });
+        };
+
+        generateBtn.addEventListener('click', generate);
+
+        downloadBtn.addEventListener('click', () => {
+            const canvas = container.querySelector('canvas');
+            if (canvas) {
+                const link = document.createElement('a');
+                link.download = 'qrcode.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            }
+        });
+
+        // Generate on Enter key in textarea
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                generate();
+            }
+        });
+    }
+</script>

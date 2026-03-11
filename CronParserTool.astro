@@ -1,0 +1,73 @@
+---
+---
+
+<div class="tool-container">
+    <div class="tool-panel">
+        <div class="tool-group">
+            <label class="tool-label">Cron Expression</label>
+            <input type="text" id="cron-input" class="tool-input" placeholder="* * * * *" value="*/5 * * * *" style="font-size: 1.2rem; font-family: monospace;">
+            <div class="tool-actions">
+                <button class="tool-btn tool-btn-secondary tool-btn-sm example-btn" data-val="*/5 * * * *">Every 5 mins</button>
+                <button class="tool-btn tool-btn-secondary tool-btn-sm example-btn" data-val="0 0 * * *">Daily at midnight</button>
+                <button class="tool-btn tool-btn-secondary tool-btn-sm example-btn" data-val="0 9 * * 1">Mondays at 9am</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="tool-col">
+        <div class="tool-box">
+            <label class="tool-label">Human Readable Description</label>
+            <div id="cron-output" class="tool-result" style="font-size: 1.2rem; font-weight: 500; min-height: 60px; display: flex; align-items: center;"></div>
+        </div>
+        <div class="tool-box">
+            <label class="tool-label">Next Occurrences</label>
+            <ul id="next-runs" style="list-style: none; padding: 0; margin: 0; background: var(--bg-color); border: 1px solid var(--box-bg); border-radius: 6px;"></ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    import cronstrue from 'cronstrue';
+    // We'll use a simple next-occurrence calculator for client-side
+    // Since full cron parsing libraries are heavy, we'll just show the description primarily
+    // and maybe add next runs if we can find a lightweight way or just stick to description for now.
+    
+    // Actually, let's just focus on the description part which is the main value add of cronstrue
+    // For next runs, we might need 'cron-parser' package but let's start with description.
+
+    const input = document.getElementById('cron-input');
+    const output = document.getElementById('cron-output');
+    const nextRuns = document.getElementById('next-runs');
+    const exampleBtns = document.querySelectorAll('.example-btn');
+
+    function updateCron() {
+        const val = input.value.trim();
+        if (!val) {
+            output.textContent = '';
+            return;
+        }
+
+        try {
+            const desc = cronstrue.toString(val);
+            output.textContent = desc;
+            output.style.color = 'var(--text-color)';
+        } catch (e) {
+            output.textContent = "Invalid cron expression";
+            output.style.color = '#dc3545';
+        }
+    }
+
+    if (input) {
+        input.addEventListener('input', updateCron);
+        
+        exampleBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                input.value = btn.dataset.val;
+                updateCron();
+            });
+        });
+
+        // Initial run
+        updateCron();
+    }
+</script>

@@ -1,0 +1,122 @@
+---
+---
+
+<div class="tool-container">
+    <div class="tool-panel" style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="mode-switch">
+            <button class="tool-btn mode-btn active" data-mode="json2yaml" style="border: none; background: transparent; color: var(--text-muted);">JSON to YAML</button>
+            <button class="tool-btn mode-btn" data-mode="yaml2json" style="border: none; background: transparent; color: var(--text-muted);">YAML to JSON</button>
+        </div>
+        <button id="convert-btn" class="tool-btn tool-btn-primary">Convert</button>
+    </div>
+
+    <div class="tool-grid-2">
+        <div class="tool-col">
+            <label id="input-label" class="tool-label">JSON Input</label>
+            <textarea id="input-text" class="tool-textarea" placeholder="Paste your code here..." style="min-height: 400px;"></textarea>
+        </div>
+        <div class="tool-col">
+            <label id="output-label" class="tool-label">YAML Output</label>
+            <textarea id="output-text" class="tool-textarea" readonly style="min-height: 400px;"></textarea>
+        </div>
+    </div>
+</div>
+
+<script>
+    import yaml from 'js-yaml';
+
+    const input = document.getElementById('input-text');
+    const output = document.getElementById('output-text');
+    const convertBtn = document.getElementById('convert-btn');
+    const modeBtns = document.querySelectorAll('.mode-btn');
+    const inputLabel = document.getElementById('input-label');
+    const outputLabel = document.getElementById('output-label');
+
+    let currentMode = 'json2yaml';
+
+    function convert() {
+        if (!input || !output) return;
+        
+        const val = input.value.trim();
+        if (!val) {
+            output.value = '';
+            return;
+        }
+
+        try {
+            if (currentMode === 'json2yaml') {
+                const jsonObj = JSON.parse(val);
+                const yamlStr = yaml.dump(jsonObj);
+                output.value = yamlStr;
+            } else {
+                const yamlObj = yaml.load(val);
+                const jsonStr = JSON.stringify(yamlObj, null, 2);
+                output.value = jsonStr;
+            }
+        } catch (e) {
+            output.value = `Error: ${e.message}`;
+        }
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+        modeBtns.forEach(btn => {
+            if (btn.dataset.mode === mode) {
+                btn.classList.add('active');
+                // Manually handle active state styles since we removed the CSS
+                btn.style.background = 'var(--card-bg)';
+                btn.style.color = 'var(--text-color)';
+                btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            } else {
+                btn.classList.remove('active');
+                btn.style.background = 'transparent';
+                btn.style.color = 'var(--text-muted)';
+                btn.style.boxShadow = 'none';
+            }
+        });
+
+        if (mode === 'json2yaml') {
+            inputLabel.textContent = 'JSON Input';
+            outputLabel.textContent = 'YAML Output';
+            input.placeholder = '{"key": "value"}';
+        } else {
+            inputLabel.textContent = 'YAML Input';
+            outputLabel.textContent = 'JSON Output';
+            input.placeholder = 'key: value';
+        }
+        
+        // Clear fields on switch
+        input.value = '';
+        output.value = '';
+    }
+
+    if (convertBtn) {
+        convertBtn.addEventListener('click', convert);
+        
+        modeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                setMode(btn.dataset.mode);
+            });
+            
+            // Initialize styles
+            if (btn.classList.contains('active')) {
+                btn.style.background = 'var(--card-bg)';
+                btn.style.color = 'var(--text-color)';
+                btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            }
+        });
+    }
+</script>
+
+<style>
+    .mode-switch {
+        display: flex;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 4px;
+        border-radius: 6px;
+    }
+    
+    :global(body.light-mode) .mode-switch {
+        background: rgba(0, 0, 0, 0.08);
+    }
+</style>

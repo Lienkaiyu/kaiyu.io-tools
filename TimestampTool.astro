@@ -1,0 +1,110 @@
+<div class="tool-container">
+    <!-- Current Time -->
+    <div class="tool-card" style="text-align: center; position: relative;">
+        <div class="tool-label" style="opacity: 0.8;">Current Unix Timestamp</div>
+        <div class="value" id="current-timestamp" style="font-size: 2.5rem; font-weight: bold; font-family: monospace; color: var(--color);">Loading...</div>
+        <button id="pause-btn" class="tool-btn tool-btn-secondary tool-btn-sm" style="position: absolute; top: 10px; right: 10px;">Pause</button>
+    </div>
+
+    <!-- Converter Section -->
+    <div class="tool-col">
+        <div class="tool-box">
+            <h3 class="tool-subtitle">Timestamp to Date</h3>
+            <div class="tool-row">
+                <input type="number" id="ts-input" class="tool-input" placeholder="e.g. 1672531200" style="flex: 2;">
+                <select id="ts-unit" class="tool-select" style="flex: 1;">
+                    <option value="sec">Seconds</option>
+                    <option value="ms">Milliseconds</option>
+                </select>
+                <button id="convert-date-btn" class="tool-btn tool-btn-primary">Convert</button>
+            </div>
+            <div class="tool-result" id="date-result">
+                <span class="tool-result-placeholder">Result will appear here</span>
+            </div>
+        </div>
+
+        <div class="tool-box">
+            <h3 class="tool-subtitle">Date to Timestamp</h3>
+            <div class="tool-row">
+                <input type="datetime-local" id="date-input" class="tool-input" style="flex: 2;">
+                <button id="convert-ts-btn" class="tool-btn tool-btn-primary">Convert</button>
+            </div>
+            <div class="tool-result" id="ts-result">
+                <span class="tool-result-placeholder">Result will appear here</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Current Timestamp
+    const currentDisplay = document.getElementById('current-timestamp');
+    const pauseBtn = document.getElementById('pause-btn');
+    let isPaused = false;
+
+    if (currentDisplay && pauseBtn) {
+        function updateCurrent() {
+            if (!isPaused) {
+                currentDisplay.textContent = Math.floor(Date.now() / 1000).toString();
+            }
+            requestAnimationFrame(updateCurrent);
+        }
+        updateCurrent();
+
+        pauseBtn.addEventListener('click', () => {
+            isPaused = !isPaused;
+            pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
+        });
+    }
+
+    // Timestamp to Date
+    const tsInput = document.getElementById('ts-input');
+    const tsUnit = document.getElementById('ts-unit');
+    const convertDateBtn = document.getElementById('convert-date-btn');
+    const dateResult = document.getElementById('date-result');
+
+    if (tsInput && tsUnit && convertDateBtn && dateResult) {
+        convertDateBtn.addEventListener('click', () => {
+            const val = parseInt(tsInput.value);
+            if (isNaN(val)) {
+                dateResult.innerHTML = '<span style="color:red">Invalid timestamp</span>';
+                return;
+            }
+
+            const ms = tsUnit.value === 'sec' ? val * 1000 : val;
+            const date = new Date(ms);
+            
+            dateResult.innerHTML = `
+                <strong>Local:</strong> ${date.toLocaleString()}<br>
+                <strong>UTC:</strong> ${date.toUTCString()}<br>
+                <strong>ISO:</strong> ${date.toISOString()}
+            `;
+        });
+    }
+
+    // Date to Timestamp
+    const dateInput = document.getElementById('date-input');
+    const convertTsBtn = document.getElementById('convert-ts-btn');
+    const tsResult = document.getElementById('ts-result');
+
+    if (dateInput && convertTsBtn && tsResult) {
+        // Set default to now
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        dateInput.value = now.toISOString().slice(0, 16);
+
+        convertTsBtn.addEventListener('click', () => {
+            const val = dateInput.value;
+            if (!val) return;
+
+            const date = new Date(val);
+            const ms = date.getTime();
+            const sec = Math.floor(ms / 1000);
+
+            tsResult.innerHTML = `
+                <strong>Seconds:</strong> ${sec}<br>
+                <strong>Milliseconds:</strong> ${ms}
+            `;
+        });
+    }
+</script>

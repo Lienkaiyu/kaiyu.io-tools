@@ -1,0 +1,147 @@
+<div class="tool-container">
+    <div class="tool-group">
+        <label for="prompt-input" class="tool-label">Input Text (Prompt)</label>
+        <textarea id="prompt-input" class="tool-textarea" placeholder="Paste your prompt here to estimate tokens..." style="height: 200px;"></textarea>
+        <div style="display: flex; gap: 15px; margin-top: 8px; font-size: 0.85rem; color: var(--text-muted); justify-content: flex-end;">
+            <span id="char-count">0 chars</span>
+            <span id="word-count">0 words</span>
+        </div>
+    </div>
+
+    <div class="tool-grid-2">
+        <div class="tool-card" style="text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <div class="token-count" id="token-count" style="font-size: 4rem; font-weight: bold; line-height: 1; margin-bottom: 10px; color: var(--color);">0</div>
+            <div class="token-label" style="font-size: 1.2rem; font-weight: 500; opacity: 0.9;">Estimated Tokens</div>
+            <div class="token-note" style="font-size: 0.8rem; opacity: 0.6; margin-top: 10px;">Based on ~4 chars/token rule of thumb</div>
+        </div>
+
+        <div class="tool-grid-2" style="gap: 15px;">
+            <div class="tool-box" style="padding: 15px; margin-bottom: 0;">
+                <div class="tool-text-muted" style="font-size: 0.9rem; margin-bottom: 5px;">GPT-4o</div>
+                <div class="tool-text" id="cost-gpt4o" style="font-size: 1.5rem; font-weight: bold; margin-bottom: 5px;">$0.0000</div>
+                <div class="tool-text-muted" style="font-size: 0.75rem;">Input: $5.00 / 1M</div>
+            </div>
+            <div class="tool-box" style="padding: 15px; margin-bottom: 0;">
+                <div class="tool-text-muted" style="font-size: 0.9rem; margin-bottom: 5px;">Claude 3.5 Sonnet</div>
+                <div class="tool-text" id="cost-claude" style="font-size: 1.5rem; font-weight: bold; margin-bottom: 5px;">$0.0000</div>
+                <div class="tool-text-muted" style="font-size: 0.75rem;">Input: $3.00 / 1M</div>
+            </div>
+            <div class="tool-box" style="padding: 15px; margin-bottom: 0;">
+                <div class="tool-text-muted" style="font-size: 0.9rem; margin-bottom: 5px;">GPT-3.5 Turbo</div>
+                <div class="tool-text" id="cost-gpt35" style="font-size: 1.5rem; font-weight: bold; margin-bottom: 5px;">$0.0000</div>
+                <div class="tool-text-muted" style="font-size: 0.75rem;">Input: $0.50 / 1M</div>
+            </div>
+            <div class="tool-box" style="padding: 15px; margin-bottom: 0;">
+                <div class="tool-text-muted" style="font-size: 0.9rem; margin-bottom: 5px;">Llama 3 (Hosted)</div>
+                <div class="tool-text" id="cost-llama" style="font-size: 1.5rem; font-weight: bold; margin-bottom: 5px;">$0.0000</div>
+                <div class="tool-text-muted" style="font-size: 0.75rem;">Input: ~$0.20 / 1M</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('prompt-input');
+    const charCount = document.getElementById('char-count');
+    const wordCount = document.getElementById('word-count');
+    const tokenCountDisplay = document.getElementById('token-count');
+    
+    const costGpt4o = document.getElementById('cost-gpt4o');
+    const costClaude = document.getElementById('cost-claude');
+    const costGpt35 = document.getElementById('cost-gpt35');
+    const costLlama = document.getElementById('cost-llama');
+
+    // Pricing per 1M tokens (Input)
+    const PRICES = {
+        gpt4o: 5.00,
+        claude: 3.00,
+        gpt35: 0.50,
+        llama: 0.20
+    };
+
+    if (input && charCount && wordCount && tokenCountDisplay) {
+        function updateStats() {
+            const text = input.value;
+            const chars = text.length;
+            const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+            
+            // Simple estimation: 1 token ~= 4 chars for English
+            // For a more accurate count, we'd need a tokenizer library (tiktoken), 
+            // but for a client-side lightweight tool, this heuristic is standard.
+            const tokens = Math.ceil(chars / 4);
+
+            charCount.textContent = `${chars.toLocaleString()} chars`;
+            wordCount.textContent = `${words.toLocaleString()} words`;
+            tokenCountDisplay.textContent = tokens.toLocaleString();
+
+            updateCosts(tokens);
+        }
+
+        function updateCosts(tokens) {
+            const calculate = (pricePerMillion) => {
+                const cost = (tokens / 1000000) * pricePerMillion;
+                return '$' + cost.toFixed(6); // Show high precision for small prompts
+            };
+
+            if (costGpt4o) costGpt4o.textContent = calculate(PRICES.gpt4o);
+            if (costClaude) costClaude.textContent = calculate(PRICES.claude);
+            if (costGpt35) costGpt35.textContent = calculate(PRICES.gpt35);
+            if (costLlama) costLlama.textContent = calculate(PRICES.llama);
+        }
+
+        input.addEventListener('input', updateStats);
+    }
+</script>
+
+<script>
+    const input = document.getElementById('prompt-input');
+    const charCount = document.getElementById('char-count');
+    const wordCount = document.getElementById('word-count');
+    const tokenCountDisplay = document.getElementById('token-count');
+    
+    const costGpt4o = document.getElementById('cost-gpt4o');
+    const costClaude = document.getElementById('cost-claude');
+    const costGpt35 = document.getElementById('cost-gpt35');
+    const costLlama = document.getElementById('cost-llama');
+
+    // Pricing per 1M tokens (Input)
+    const PRICES = {
+        gpt4o: 5.00,
+        claude: 3.00,
+        gpt35: 0.50,
+        llama: 0.20
+    };
+
+    if (input && charCount && wordCount && tokenCountDisplay) {
+        function updateStats() {
+            const text = input.value;
+            const chars = text.length;
+            const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+            
+            // Simple estimation: 1 token ~= 4 chars for English
+            // For a more accurate count, we'd need a tokenizer library (tiktoken), 
+            // but for a client-side lightweight tool, this heuristic is standard.
+            const tokens = Math.ceil(chars / 4);
+
+            charCount.textContent = `${chars.toLocaleString()} chars`;
+            wordCount.textContent = `${words.toLocaleString()} words`;
+            tokenCountDisplay.textContent = tokens.toLocaleString();
+
+            updateCosts(tokens);
+        }
+
+        function updateCosts(tokens) {
+            const calculate = (pricePerMillion) => {
+                const cost = (tokens / 1000000) * pricePerMillion;
+                return '$' + cost.toFixed(6); // Show high precision for small prompts
+            };
+
+            if (costGpt4o) costGpt4o.textContent = calculate(PRICES.gpt4o);
+            if (costClaude) costClaude.textContent = calculate(PRICES.claude);
+            if (costGpt35) costGpt35.textContent = calculate(PRICES.gpt35);
+            if (costLlama) costLlama.textContent = calculate(PRICES.llama);
+        }
+
+        input.addEventListener('input', updateStats);
+    }
+</script>

@@ -1,0 +1,89 @@
+<div class="tool-container">
+    <div class="tool-tabs">
+        <button class="tool-tab active" data-tab="encode">Encode</button>
+        <button class="tool-tab" data-tab="decode">Decode</button>
+    </div>
+
+    <div class="tool-col">
+        <div class="tool-group">
+            <label for="input-text" class="tool-label">Input</label>
+            <textarea id="input-text" class="tool-textarea" placeholder="Type or paste content here..."></textarea>
+        </div>
+
+        <div class="tool-actions">
+            <button id="process-btn" class="tool-btn tool-btn-primary">Encode</button>
+            <button id="clear-btn" class="tool-btn tool-btn-secondary">Clear</button>
+        </div>
+
+        <div class="tool-group" style="position: relative;">
+            <label for="output-text" class="tool-label">Output</label>
+            <textarea id="output-text" class="tool-textarea" readonly placeholder="Result will appear here..."></textarea>
+            <button id="copy-btn" class="tool-btn tool-btn-secondary tool-btn-sm" style="position: absolute; top: 32px; right: 10px;">Copy</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let mode = 'encode';
+    const input = document.getElementById('input-text');
+    const output = document.getElementById('output-text');
+    const processBtn = document.getElementById('process-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const copyBtn = document.getElementById('copy-btn');
+    const tabs = document.querySelectorAll('.tool-tab');
+
+    if (input && output && processBtn && clearBtn && copyBtn && tabs) {
+        // Tab Switching
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                mode = tab.dataset.tab;
+                processBtn.textContent = mode === 'encode' ? 'Encode' : 'Decode';
+                // Trigger reprocessing if there is input
+                if (input.value) process();
+            });
+        });
+
+        // Processing
+        function process() {
+            const val = input.value;
+            if (!val) {
+                output.value = '';
+                return;
+            }
+
+            try {
+                if (mode === 'encode') {
+                    output.value = btoa(val);
+                } else {
+                    output.value = atob(val);
+                }
+            } catch (e) {
+                output.value = 'Error: Invalid input for ' + mode;
+            }
+        }
+
+        processBtn.addEventListener('click', process);
+        
+        // Auto-process on input (optional, maybe debounce)
+        input.addEventListener('input', process);
+
+        // Clear
+        clearBtn.addEventListener('click', () => {
+            input.value = '';
+            output.value = '';
+            input.focus();
+        });
+
+        // Copy
+        copyBtn.addEventListener('click', () => {
+            if (output.value) {
+                navigator.clipboard.writeText(output.value);
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => copyBtn.textContent = originalText, 2000);
+            }
+        });
+    }
+</script>

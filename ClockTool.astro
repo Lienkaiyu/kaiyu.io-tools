@@ -1,0 +1,88 @@
+---
+import ClockToolReact from './ClockTool';
+---
+
+<div class="clock-tool-wrapper">
+    <ClockToolReact client:load />
+</div>
+
+<style>
+    .clock-tool-wrapper {
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    :global(.tool-container) {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+    :global(.tool-card) {
+        background: var(--card-bg);
+        padding: 2rem;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    :global(.clock-display) {
+        font-family: 'Menlo', 'Consolas', 'Monaco', monospace;
+        font-size: 3rem;
+        font-weight: bold;
+        color: var(--color);
+        margin: 1rem 0;
+        font-variant-numeric: tabular-nums;
+    }
+    :global(.date-display) {
+        color: var(--text-muted);
+        font-size: 1.2rem;
+    }
+    :global(.stats-grid) {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+        text-align: left;
+    }
+    :global(.stat-item) {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    :global(.stat-item .label) {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+    :global(.stat-item .value) {
+        font-weight: 600;
+        font-family: monospace;
+    }
+    :global(.stat-item .value.success) {
+        color: #00ff00;
+    }
+    :global(.stat-item .value.error) {
+        color: #ff0000;
+    }
+    :global(.btn-primary) {
+        background: var(--color);
+        color: var(--bg-color);
+        border: none;
+        padding: 0.8rem 2rem;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+    :global(.btn-primary:hover) {
+        opacity: 0.9;
+    }
+    :global(.btn-primary:disabled) {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    @media (max-width: 768px) {
+        :global(.clock-display) {
+            font-size: 2rem;
+        }
+    }
+</style>

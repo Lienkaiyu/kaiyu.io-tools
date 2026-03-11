@@ -1,0 +1,107 @@
+<div class="tool-container">
+    <div class="tool-panel">
+        <div class="tool-group" style="flex: 3;">
+            <label class="tool-label">Regex Pattern</label>
+            <div class="regex-input-wrapper" style="display: flex; align-items: center; gap: 5px; font-family: monospace; font-size: 1.1rem;">
+                <span class="slash" style="color: var(--text-muted); font-weight: bold;">/</span>
+                <input type="text" id="regex-pattern" class="tool-input" placeholder="e.g. [a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}" style="flex: 1;">
+                <span class="slash" style="color: var(--text-muted); font-weight: bold;">/</span>
+                <input type="text" id="regex-flags" class="tool-input" placeholder="g" style="width: 50px;">
+            </div>
+        </div>
+    </div>
+
+    <div class="tool-grid-1" style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="tool-group">
+            <label class="tool-label">Test String</label>
+            <textarea id="test-string" class="tool-textarea" placeholder="Paste text here to test against the regex..." style="height: 150px; min-height: 150px;"></textarea>
+        </div>
+
+        <div class="tool-group">
+            <label class="tool-label">Match Results</label>
+            <div id="match-output" class="tool-textarea" style="min-height: 150px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; font-family: monospace;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const patternInput = document.getElementById('regex-pattern');
+    const flagsInput = document.getElementById('regex-flags');
+    const testInput = document.getElementById('test-string');
+    const output = document.getElementById('match-output');
+
+    if (patternInput && testInput && output) {
+        function runRegex() {
+            const pattern = patternInput.value;
+            const flags = flagsInput.value;
+            const text = testInput.value;
+
+            if (!pattern) {
+                output.textContent = text;
+                return;
+            }
+
+            try {
+                const regex = new RegExp(pattern, flags);
+                
+                // Simple highlighting logic
+                // Note: This is a basic implementation. For complex nested groups, 
+                // a library is usually better, but this works for visual feedback.
+                
+                if (!text) {
+                    output.textContent = '';
+                    return;
+                }
+
+                let html = '';
+                let lastIndex = 0;
+                
+                // If global flag is not set, we only match once
+                if (!flags.includes('g')) {
+                    const match = regex.exec(text);
+                    if (match) {
+                        html += escapeHtml(text.substring(0, match.index));
+                        html += `<span class="highlight">${escapeHtml(match[0])}</span>`;
+                        html += escapeHtml(text.substring(match.index + match[0].length));
+                    } else {
+                        html = escapeHtml(text);
+                    }
+                } else {
+                    // Global match
+                    let match;
+                    // Reset lastIndex just in case
+                    regex.lastIndex = 0;
+                    
+                    // We need to be careful with zero-length matches to avoid infinite loops
+                    while ((match = regex.exec(text)) !== null) {
+                        html += escapeHtml(text.substring(lastIndex, match.index));
+                        html += `<span class="highlight">${escapeHtml(match[0])}</span>`;
+                        lastIndex = regex.lastIndex;
+                        
+                        if (match.index === regex.lastIndex) {
+                            regex.lastIndex++;
+                        }
+                    }
+                    html += escapeHtml(text.substring(lastIndex));
+                }
+
+                output.innerHTML = html;
+            } catch (e) {
+                output.innerHTML = `<span style="color:red">Invalid Regex: ${e.message}</span>`;
+            }
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        [patternInput, flagsInput, testInput].forEach(el => {
+            el.addEventListener('input', runRegex);
+        });
+    }
+</script>

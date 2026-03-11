@@ -1,0 +1,73 @@
+<div class="tool-container">
+    <div class="tool-panel tool-row">
+        <button id="generate-btn" class="tool-btn tool-btn-primary">Generate UUIDs</button>
+        <div class="tool-row" style="gap: 8px;">
+            <label for="count" class="tool-label" style="margin:0">Count:</label>
+            <input type="number" id="count" value="1" min="1" max="50" class="tool-input" style="width: 80px;">
+        </div>
+        <div class="tool-row" style="gap: 8px;">
+            <label class="tool-label" style="margin:0; display:flex; align-items:center; gap:5px; cursor:pointer;">
+                <input type="checkbox" id="hyphens" checked> Hyphens
+            </label>
+        </div>
+        <div class="tool-row" style="gap: 8px;">
+            <label class="tool-label" style="margin:0; display:flex; align-items:center; gap:5px; cursor:pointer;">
+                <input type="checkbox" id="uppercase"> Uppercase
+            </label>
+        </div>
+    </div>
+
+    <div style="position: relative;">
+        <textarea id="output" readonly placeholder="Generated UUIDs will appear here..." class="tool-textarea" style="height: 300px;"></textarea>
+        <button id="copy-btn" class="tool-btn tool-btn-secondary tool-btn-sm" style="position: absolute; top: 10px; right: 10px;">Copy All</button>
+    </div>
+</div>
+
+<script>
+    const generateBtn = document.getElementById('generate-btn');
+    const output = document.getElementById('output');
+    const countInput = document.getElementById('count');
+    const hyphensInput = document.getElementById('hyphens');
+    const uppercaseInput = document.getElementById('uppercase');
+    const copyBtn = document.getElementById('copy-btn');
+
+    if (generateBtn && output) {
+        function generateUUID() {
+            // Basic v4 UUID
+            let uuid = crypto.randomUUID();
+            
+            if (!hyphensInput.checked) {
+                uuid = uuid.replace(/-/g, '');
+            }
+            
+            if (uppercaseInput.checked) {
+                uuid = uuid.toUpperCase();
+            }
+            
+            return uuid;
+        }
+
+        generateBtn.addEventListener('click', () => {
+            const count = parseInt(countInput.value) || 1;
+            const uuids = [];
+            
+            for (let i = 0; i < count; i++) {
+                uuids.push(generateUUID());
+            }
+            
+            output.value = uuids.join('\n');
+        });
+
+        copyBtn.addEventListener('click', () => {
+            if (output.value) {
+                navigator.clipboard.writeText(output.value);
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => copyBtn.textContent = originalText, 2000);
+            }
+        });
+
+        // Generate one on load
+        generateBtn.click();
+    }
+</script>
