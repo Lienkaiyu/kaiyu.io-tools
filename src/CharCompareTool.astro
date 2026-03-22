@@ -5,44 +5,44 @@
     <div class="tool-panel cc-toolbar">
         <div class="toolbar-group">
             <label class="tool-label" style="margin:0;">Mode:</label>
-            <button class="tool-btn mode-btn active" data-mode="char">字元</button>
-            <button class="tool-btn mode-btn" data-mode="word">詞</button>
-            <button class="tool-btn mode-btn" data-mode="line">行</button>
+            <button class="tool-btn mode-btn active" data-mode="char">Char</button>
+            <button class="tool-btn mode-btn" data-mode="word">Word</button>
+            <button class="tool-btn mode-btn" data-mode="line">Line</button>
         </div>
         <div class="toolbar-group">
             <label class="cc-toggle">
                 <input type="checkbox" id="ignore-case" />
-                <span>忽略大小寫</span>
+                <span>Ignore Case <small class="cc-zh">忽略大小寫</small></span>
             </label>
             <label class="cc-toggle">
                 <input type="checkbox" id="ignore-whitespace" />
-                <span>忽略空白</span>
+                <span>Ignore Whitespace <small class="cc-zh">忽略空白</small></span>
             </label>
         </div>
-        <button id="swap-btn" class="tool-btn tool-btn-secondary">⇄ 交換</button>
+        <button id="swap-btn" class="tool-btn tool-btn-secondary">⇄ Swap <small class="cc-zh">交換</small></button>
     </div>
 
     <div class="cc-grid">
         <div class="cc-pane">
-            <div class="pane-header">文字 A</div>
-            <textarea id="text-a" class="tool-textarea cc-textarea" placeholder="在此輸入文字 A..."></textarea>
+            <div class="pane-header">Text A <small class="cc-zh">文字 A</small></div>
+            <textarea id="text-a" class="tool-textarea cc-textarea" placeholder="Enter text A..."></textarea>
         </div>
         <div class="cc-pane">
-            <div class="pane-header">文字 B</div>
-            <textarea id="text-b" class="tool-textarea cc-textarea" placeholder="在此輸入文字 B..."></textarea>
+            <div class="pane-header">Text B <small class="cc-zh">文字 B</small></div>
+            <textarea id="text-b" class="tool-textarea cc-textarea" placeholder="Enter text B..."></textarea>
         </div>
     </div>
 
     <div class="cc-stats-bar">
-        <span id="stat-match" class="stat-badge match">✓ 相同: 0</span>
-        <span id="stat-diff" class="stat-badge diff">✗ 差異: 0</span>
-        <span id="stat-total" class="stat-badge total">總計: 0</span>
-        <span id="stat-pct" class="stat-badge">相似度: —</span>
+        <span id="stat-match" class="stat-badge match">✓ Match: 0</span>
+        <span id="stat-diff" class="stat-badge diff">✗ Diff: 0</span>
+        <span id="stat-total" class="stat-badge total">Total: 0</span>
+        <span id="stat-pct" class="stat-badge">Similarity: —</span>
     </div>
 
-    <div class="pane-header" style="border-radius: 6px 6px 0 0; margin-top: 8px;">比對結果</div>
+    <div class="pane-header" style="border-radius: 6px 6px 0 0; margin-top: 8px;">Diff Result <small class="cc-zh">比對結果</small></div>
     <div id="diff-output" class="diff-output">
-        <span class="diff-placeholder">在上方輸入文字後自動顯示比對結果</span>
+        <span class="diff-placeholder">Enter text above to see diff results automatically</span>
     </div>
 </div>
 
@@ -119,11 +119,11 @@
         const rawB = textB.value;
 
         if (!rawA && !rawB) {
-            diffOutput.innerHTML = '<span class="diff-placeholder">在上方輸入文字後自動顯示比對結果</span>';
-            statMatch.textContent = '✓ 相同: 0';
-            statDiff.textContent = '✗ 差異: 0';
-            statTotal.textContent = '總計: 0';
-            statPct.textContent = '相似度: —';
+            diffOutput.innerHTML = '<span class="diff-placeholder">Enter text above to see diff results automatically</span>';
+            statMatch.textContent = '✓ Match: 0';
+            statDiff.textContent = '✗ Diff: 0';
+            statTotal.textContent = 'Total: 0';
+            statPct.textContent = 'Similarity: —';
             return;
         }
 
@@ -154,10 +154,10 @@
         const total = matched + Math.max(deleted, inserted);
         const pct = total > 0 ? Math.round((matched / total) * 100) : 100;
 
-        statMatch.textContent = `✓ 相同: ${matched}`;
-        statDiff.textContent = `✗ 差異: ${deleted + inserted}`;
-        statTotal.textContent = `總計: ${total}`;
-        statPct.textContent = `相似度: ${pct}%`;
+        statMatch.textContent = `✓ Match: ${matched}`;
+        statDiff.textContent = `✗ Diff: ${deleted + inserted}`;
+        statTotal.textContent = `Total: ${total}`;
+        statPct.textContent = `Similarity: ${pct}%`;
 
         diffOutput.innerHTML = `<pre class="diff-pre">${html}</pre>`;
     }
@@ -330,6 +330,13 @@
         background: rgba(74, 222, 128, 0.15);
         color: #4ade80;
         border-radius: 2px;
+    }
+
+    .cc-zh {
+        font-size: 0.8em;
+        opacity: 0.55;
+        font-weight: 400;
+        letter-spacing: 0;
     }
 
     @media (max-width: 640px) {
