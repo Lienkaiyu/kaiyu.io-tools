@@ -12,23 +12,23 @@
         <div class="toolbar-group">
             <label class="cc-toggle">
                 <input type="checkbox" id="ignore-case" />
-                <span>Ignore Case <small class="cc-zh">忽略大小寫</small></span>
+                <span>Ignore Case</span>
             </label>
             <label class="cc-toggle">
                 <input type="checkbox" id="ignore-whitespace" />
-                <span>Ignore Whitespace <small class="cc-zh">忽略空白</small></span>
+                <span>Ignore Whitespace</span>
             </label>
         </div>
-        <button id="swap-btn" class="tool-btn tool-btn-secondary">⇄ Swap <small class="cc-zh">交換</small></button>
+        <button id="swap-btn" class="tool-btn tool-btn-secondary">⇄ Swap</button>
     </div>
 
     <div class="cc-grid">
         <div class="cc-pane">
-            <div class="pane-header">Text A <small class="cc-zh">文字 A</small></div>
+            <div class="pane-header">Text A</div>
             <textarea id="text-a" class="tool-textarea cc-textarea" placeholder="Enter text A..."></textarea>
         </div>
         <div class="cc-pane">
-            <div class="pane-header">Text B <small class="cc-zh">文字 B</small></div>
+            <div class="pane-header">Text B</div>
             <textarea id="text-b" class="tool-textarea cc-textarea" placeholder="Enter text B..."></textarea>
         </div>
     </div>
@@ -40,7 +40,7 @@
         <span id="stat-pct" class="stat-badge">Similarity: —</span>
     </div>
 
-    <div class="pane-header" style="border-radius: 6px 6px 0 0; margin-top: 8px;">Diff Result <small class="cc-zh">比對結果</small></div>
+    <div class="pane-header" style="border-radius: 6px 6px 0 0; margin-top: 8px;">Diff Result</div>
     <div id="diff-output" class="diff-output">
         <span class="diff-placeholder">Enter text above to see diff results automatically</span>
     </div>
@@ -330,13 +330,6 @@
         background: rgba(74, 222, 128, 0.15);
         color: #4ade80;
         border-radius: 2px;
-    }
-
-    .cc-zh {
-        font-size: 0.8em;
-        opacity: 0.55;
-        font-weight: 400;
-        letter-spacing: 0;
     }
 
     @media (max-width: 640px) {
