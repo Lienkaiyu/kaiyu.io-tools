@@ -1,0 +1,340 @@
+---
+---
+
+<div class="tool-container">
+    <div class="tool-panel cc-toolbar">
+        <div class="toolbar-group">
+            <label class="tool-label" style="margin:0;">Mode:</label>
+            <button class="tool-btn mode-btn active" data-mode="char">字元</button>
+            <button class="tool-btn mode-btn" data-mode="word">詞</button>
+            <button class="tool-btn mode-btn" data-mode="line">行</button>
+        </div>
+        <div class="toolbar-group">
+            <label class="cc-toggle">
+                <input type="checkbox" id="ignore-case" />
+                <span>忽略大小寫</span>
+            </label>
+            <label class="cc-toggle">
+                <input type="checkbox" id="ignore-whitespace" />
+                <span>忽略空白</span>
+            </label>
+        </div>
+        <button id="swap-btn" class="tool-btn tool-btn-secondary">⇄ 交換</button>
+    </div>
+
+    <div class="cc-grid">
+        <div class="cc-pane">
+            <div class="pane-header">文字 A</div>
+            <textarea id="text-a" class="tool-textarea cc-textarea" placeholder="在此輸入文字 A..."></textarea>
+        </div>
+        <div class="cc-pane">
+            <div class="pane-header">文字 B</div>
+            <textarea id="text-b" class="tool-textarea cc-textarea" placeholder="在此輸入文字 B..."></textarea>
+        </div>
+    </div>
+
+    <div class="cc-stats-bar">
+        <span id="stat-match" class="stat-badge match">✓ 相同: 0</span>
+        <span id="stat-diff" class="stat-badge diff">✗ 差異: 0</span>
+        <span id="stat-total" class="stat-badge total">總計: 0</span>
+        <span id="stat-pct" class="stat-badge">相似度: —</span>
+    </div>
+
+    <div class="pane-header" style="border-radius: 6px 6px 0 0; margin-top: 8px;">比對結果</div>
+    <div id="diff-output" class="diff-output">
+        <span class="diff-placeholder">在上方輸入文字後自動顯示比對結果</span>
+    </div>
+</div>
+
+<script>
+    type Mode = 'char' | 'word' | 'line';
+
+    const textA = document.getElementById('text-a') as HTMLTextAreaElement;
+    const textB = document.getElementById('text-b') as HTMLTextAreaElement;
+    const diffOutput = document.getElementById('diff-output') as HTMLDivElement;
+    const statMatch = document.getElementById('stat-match')!;
+    const statDiff = document.getElementById('stat-diff')!;
+    const statTotal = document.getElementById('stat-total')!;
+    const statPct = document.getElementById('stat-pct')!;
+    const ignoreCaseEl = document.getElementById('ignore-case') as HTMLInputElement;
+    const ignoreWsEl = document.getElementById('ignore-whitespace') as HTMLInputElement;
+    const swapBtn = document.getElementById('swap-btn');
+
+    let currentMode: Mode = 'char';
+
+    function tokenize(text: string, mode: Mode): string[] {
+        if (mode === 'char') return text.split('');
+        if (mode === 'word') return text.match(/\S+|\s+/g) ?? [];
+        return text.split('\n');
+    }
+
+    function normalize(text: string): string {
+        if (ignoreCaseEl.checked) text = text.toLowerCase();
+        if (ignoreWsEl.checked) text = text.replace(/\s+/g, ' ').trim();
+        return text;
+    }
+
+    // Myers diff (LCS-based)
+    function lcs(a: string[], b: string[]): Array<[number, number]> {
+        const m = a.length, n = b.length;
+        const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+        for (let i = 1; i <= m; i++) {
+            for (let j = 1; j <= n; j++) {
+                dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+            }
+        }
+        const result: Array<[number, number]> = [];
+        let i = m, j = n;
+        while (i > 0 && j > 0) {
+            if (a[i - 1] === b[j - 1]) { result.unshift([i - 1, j - 1]); i--; j--; }
+            else if (dp[i - 1][j] > dp[i][j - 1]) i--;
+            else j--;
+        }
+        return result;
+    }
+
+    function diff(a: string[], b: string[]): Array<{ type: 'equal' | 'delete' | 'insert'; value: string }> {
+        const common = lcs(a, b);
+        const result: Array<{ type: 'equal' | 'delete' | 'insert'; value: string }> = [];
+        let ai = 0, bi = 0, ci = 0;
+        while (ci < common.length) {
+            const [ai2, bi2] = common[ci];
+            while (ai < ai2) result.push({ type: 'delete', value: a[ai++] });
+            while (bi < bi2) result.push({ type: 'insert', value: b[bi++] });
+            result.push({ type: 'equal', value: a[ai++] });
+            bi++;
+            ci++;
+        }
+        while (ai < a.length) result.push({ type: 'delete', value: a[ai++] });
+        while (bi < b.length) result.push({ type: 'insert', value: b[bi++] });
+        return result;
+    }
+
+    function escape(s: string): string {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function compare() {
+        const rawA = textA.value;
+        const rawB = textB.value;
+
+        if (!rawA && !rawB) {
+            diffOutput.innerHTML = '<span class="diff-placeholder">在上方輸入文字後自動顯示比對結果</span>';
+            statMatch.textContent = '✓ 相同: 0';
+            statDiff.textContent = '✗ 差異: 0';
+            statTotal.textContent = '總計: 0';
+            statPct.textContent = '相似度: —';
+            return;
+        }
+
+        const tokA = tokenize(normalize(rawA), currentMode);
+        const tokB = tokenize(normalize(rawB), currentMode);
+        const patches = diff(tokA, tokB);
+
+        let matched = 0, deleted = 0, inserted = 0;
+        let html = '';
+
+        const isLine = currentMode === 'line';
+
+        for (const p of patches) {
+            const val = escape(p.value);
+            const display = isLine ? val + '\n' : val;
+            if (p.type === 'equal') {
+                matched++;
+                html += `<span class="d-equal">${display}</span>`;
+            } else if (p.type === 'delete') {
+                deleted++;
+                html += `<span class="d-delete">${display}</span>`;
+            } else {
+                inserted++;
+                html += `<span class="d-insert">${display}</span>`;
+            }
+        }
+
+        const total = matched + Math.max(deleted, inserted);
+        const pct = total > 0 ? Math.round((matched / total) * 100) : 100;
+
+        statMatch.textContent = `✓ 相同: ${matched}`;
+        statDiff.textContent = `✗ 差異: ${deleted + inserted}`;
+        statTotal.textContent = `總計: ${total}`;
+        statPct.textContent = `相似度: ${pct}%`;
+
+        diffOutput.innerHTML = `<pre class="diff-pre">${html}</pre>`;
+    }
+
+    textA.addEventListener('input', compare);
+    textB.addEventListener('input', compare);
+    ignoreCaseEl.addEventListener('change', compare);
+    ignoreWsEl.addEventListener('change', compare);
+
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentMode = (btn as HTMLElement).dataset.mode as Mode;
+            compare();
+        });
+    });
+
+    swapBtn?.addEventListener('click', () => {
+        const tmp = textA.value;
+        textA.value = textB.value;
+        textB.value = tmp;
+        compare();
+    });
+</script>
+
+<style>
+    .cc-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px 14px;
+    }
+
+    .toolbar-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .mode-btn {
+        padding: 4px 10px;
+        font-size: 13px;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .mode-btn.active {
+        background: var(--card-bg);
+        color: var(--text-color);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    :global(body.light-mode) .mode-btn {
+        border-color: rgba(0,0,0,0.12);
+    }
+
+    .cc-toggle {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 13px;
+        color: var(--text-muted);
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .cc-toggle input {
+        accent-color: var(--color);
+    }
+
+    .cc-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .cc-pane {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    :global(body.light-mode) .cc-pane {
+        border-color: rgba(0,0,0,0.1);
+    }
+
+    .pane-header {
+        padding: 8px 14px;
+        font-size: 12px;
+        color: var(--text-muted);
+        background: var(--box-bg);
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    :global(body.light-mode) .pane-header {
+        border-bottom-color: rgba(0,0,0,0.08);
+    }
+
+    .cc-textarea {
+        border: none;
+        border-radius: 0;
+        resize: none;
+        min-height: 160px;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .cc-stats-bar {
+        display: flex;
+        gap: 10px;
+        padding: 8px 4px;
+        flex-wrap: wrap;
+    }
+
+    .stat-badge {
+        font-size: 12px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        background: var(--box-bg);
+        color: var(--text-muted);
+    }
+
+    .stat-badge.match { color: #4ade80; background: rgba(74, 222, 128, 0.1); }
+    .stat-badge.diff  { color: #f87171; background: rgba(248, 113, 113, 0.1); }
+    .stat-badge.total { color: var(--text-muted); }
+
+    .diff-output {
+        background: var(--box-bg);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-top: none;
+        border-radius: 0 0 6px 6px;
+        min-height: 100px;
+        padding: 12px 16px;
+        overflow-x: auto;
+    }
+
+    :global(body.light-mode) .diff-output {
+        border-color: rgba(0,0,0,0.1);
+    }
+
+    .diff-placeholder {
+        color: var(--text-muted);
+        font-size: 13px;
+    }
+
+    .diff-pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-all;
+        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    :global(.d-equal) { color: var(--text-color); }
+    :global(.d-delete) {
+        background: rgba(248, 113, 113, 0.2);
+        color: #f87171;
+        border-radius: 2px;
+        text-decoration: line-through;
+    }
+    :global(.d-insert) {
+        background: rgba(74, 222, 128, 0.15);
+        color: #4ade80;
+        border-radius: 2px;
+    }
+
+    @media (max-width: 640px) {
+        .cc-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

@@ -1,0 +1,306 @@
+---
+---
+
+<div class="tool-container">
+    <div class="tool-panel mermaid-toolbar">
+        <div class="toolbar-group">
+            <span class="tool-label" style="margin:0;">Template:</span>
+            <select id="template-select" class="tool-select" style="width:auto;">
+                <option value="flowchart">Flowchart</option>
+                <option value="sequence">Sequence</option>
+                <option value="class">Class</option>
+                <option value="state">State</option>
+                <option value="er">ER</option>
+                <option value="gantt">Gantt</option>
+                <option value="pie">Pie</option>
+                <option value="mindmap">Mindmap</option>
+            </select>
+        </div>
+        <div class="toolbar-actions">
+            <button id="copy-btn" class="tool-btn tool-btn-secondary">Copy</button>
+            <button id="download-btn" class="tool-btn tool-btn-secondary">Download SVG</button>
+        </div>
+    </div>
+
+    <div class="mermaid-grid">
+        <div class="mermaid-pane">
+            <div class="pane-header">Code</div>
+            <textarea id="mermaid-input" class="tool-textarea mermaid-textarea" spellcheck="false"></textarea>
+        </div>
+        <div class="mermaid-divider"></div>
+        <div class="mermaid-pane">
+            <div class="pane-header">Preview</div>
+            <div id="mermaid-preview" class="mermaid-preview">
+                <div id="mermaid-output"></div>
+                <div id="mermaid-error" class="mermaid-error" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const TEMPLATES: Record<string, string> = {
+        flowchart: `flowchart TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Action 1]
+    B -->|No| D[Action 2]
+    C --> E[End]
+    D --> E`,
+        sequence: `sequenceDiagram
+    participant Alice
+    participant Bob
+    Alice->>Bob: Hello Bob!
+    Bob-->>Alice: Hi Alice!
+    Alice->>Bob: How are you?
+    Bob-->>Alice: Great, thanks!`,
+        class: `classDiagram
+    class Animal {
+        +String name
+        +int age
+        +makeSound() void
+    }
+    class Dog {
+        +fetch() void
+    }
+    Animal <|-- Dog`,
+        state: `stateDiagram-v2
+    [*] --> Idle
+    Idle --> Processing : start
+    Processing --> Done : complete
+    Processing --> Error : fail
+    Done --> [*]
+    Error --> Idle : retry`,
+        er: `erDiagram
+    USER {
+        int id PK
+        string name
+        string email
+    }
+    POST {
+        int id PK
+        string title
+        int userId FK
+    }
+    USER ||--o{ POST : "writes"`,
+        gantt: `gantt
+    title Project Timeline
+    dateFormat YYYY-MM-DD
+    section Planning
+    Research    :a1, 2024-01-01, 7d
+    Design      :a2, after a1, 5d
+    section Development
+    Coding      :a3, after a2, 10d
+    Testing     :a4, after a3, 5d`,
+        pie: `pie title Browser Usage
+    "Chrome" : 65
+    "Firefox" : 15
+    "Safari" : 12
+    "Edge" : 8`,
+        mindmap: `mindmap
+  root((Project))
+    Frontend
+      React
+      CSS
+    Backend
+      Node.js
+      Database
+    DevOps
+      CI/CD
+      Monitoring`,
+    };
+
+    const input = document.getElementById('mermaid-input') as HTMLTextAreaElement;
+    const output = document.getElementById('mermaid-output') as HTMLDivElement;
+    const errorEl = document.getElementById('mermaid-error') as HTMLDivElement;
+    const templateSelect = document.getElementById('template-select') as HTMLSelectElement;
+    const copyBtn = document.getElementById('copy-btn');
+    const downloadBtn = document.getElementById('download-btn');
+
+    let renderTimer: ReturnType<typeof setTimeout>;
+
+    async function loadMermaid() {
+        const { default: mermaid } = await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs');
+        const isDark = !document.body.classList.contains('light-mode');
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: isDark ? 'dark' : 'default',
+            securityLevel: 'loose',
+        });
+        return mermaid;
+    }
+
+    let mermaidInstance: any = null;
+    let idCounter = 0;
+
+    async function render() {
+        if (!mermaidInstance) {
+            mermaidInstance = await loadMermaid();
+        }
+        const code = input.value.trim();
+        if (!code) {
+            output.innerHTML = '';
+            errorEl.style.display = 'none';
+            return;
+        }
+        try {
+            idCounter++;
+            const id = `mermaid-${idCounter}`;
+            const { svg } = await mermaidInstance.render(id, code);
+            output.innerHTML = svg;
+            errorEl.style.display = 'none';
+        } catch (e: any) {
+            output.innerHTML = '';
+            errorEl.textContent = e.message || 'Invalid diagram syntax';
+            errorEl.style.display = 'block';
+        }
+    }
+
+    function scheduleRender() {
+        clearTimeout(renderTimer);
+        renderTimer = setTimeout(render, 400);
+    }
+
+    input.addEventListener('input', scheduleRender);
+
+    templateSelect.addEventListener('change', () => {
+        input.value = TEMPLATES[templateSelect.value] ?? '';
+        scheduleRender();
+    });
+
+    copyBtn?.addEventListener('click', () => {
+        navigator.clipboard.writeText(input.value);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+    });
+
+    downloadBtn?.addEventListener('click', () => {
+        const svg = output.querySelector('svg');
+        if (!svg) return;
+        const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'diagram.svg';
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+
+    input.value = TEMPLATES.flowchart;
+    render();
+</script>
+
+<style>
+    .mermaid-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 10px 14px;
+    }
+
+    .toolbar-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .toolbar-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .mermaid-grid {
+        display: grid;
+        grid-template-columns: 1fr 1px 1fr;
+        height: calc(100vh - 200px);
+        min-height: 400px;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    :global(body.light-mode) .mermaid-grid {
+        border-color: rgba(0,0,0,0.1);
+    }
+
+    .mermaid-pane {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .pane-header {
+        padding: 8px 14px;
+        font-size: 12px;
+        color: var(--text-muted);
+        background: var(--box-bg);
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    :global(body.light-mode) .pane-header {
+        border-bottom-color: rgba(0,0,0,0.08);
+    }
+
+    .mermaid-textarea {
+        flex: 1;
+        border: none;
+        border-radius: 0;
+        resize: none;
+        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        padding: 16px;
+    }
+
+    .mermaid-divider {
+        background: rgba(255,255,255,0.08);
+    }
+
+    :global(body.light-mode) .mermaid-divider {
+        background: rgba(0,0,0,0.1);
+    }
+
+    .mermaid-preview {
+        flex: 1;
+        overflow: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    #mermaid-output {
+        max-width: 100%;
+    }
+
+    #mermaid-output :global(svg) {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .mermaid-error {
+        color: #ff6b6b;
+        font-family: monospace;
+        font-size: 13px;
+        white-space: pre-wrap;
+        padding: 12px;
+        background: rgba(255, 107, 107, 0.08);
+        border-radius: 6px;
+        border: 1px solid rgba(255, 107, 107, 0.2);
+    }
+
+    @media (max-width: 768px) {
+        .mermaid-grid {
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr 1px 1fr;
+        }
+        .mermaid-divider {
+            height: 1px;
+            width: 100%;
+        }
+    }
+</style>
